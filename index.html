@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Reel</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23fff'/%3E%3Crect x='10' y='16' width='44' height='32' rx='6' fill='%23A142F4'/%3E%3Cpath d='M28 25 L40 32 L28 39 Z' fill='%23fff'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23fff'/%3E%3Crect x='10' y='16' width='44' height='32' rx='6' fill='%233C4043'/%3E%3Cpath d='M28 25 L40 32 L28 39 Z' fill='%23fff'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
   --bg:#F8F7FB; --card:#FFFFFF; --sunken:#F2F0F7;
   --line:#E2DEEA; --line-soft:#ECE9F2;
   --ink:#202124; --ink-2:#5F6368; --ink-3:#80868B;
-  --hot:#A142F4; --hot-soft:#F3E8FD; --hot-line:#D7AEFB;
+  --hot:#3C4043; --hot-soft:#ECEDEF; --hot-line:#BDC1C6;
   --red:#EA4335; --red-soft:#FCE8E6; --yellow:#FBBC04; --amber-ink:#9A6700; --amber-soft:#FEF7E0;
   --g50:#F8F9FA; --g100:#F1F3F4; --g200:#E8EAED; --g300:#DADCE0;
 }
@@ -181,9 +181,9 @@ a{color:inherit}
 .tagbox:focus-within{border-color:var(--hot)}
 .tagbox input{flex:1;min-width:160px;margin:0;padding:4px 0;border:none;font-size:18px}
 .tg{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:none;
-  background:var(--hot-soft);color:#7B1FA2;border-radius:999px;padding:6px 8px 6px 13px}
-.tg button{width:20px;height:20px;border-radius:50%;font-size:14px;line-height:1;color:#7B1FA2}
-.tg button:hover{background:#7B1FA2;color:#fff}
+  background:var(--hot-soft);color:#3C4043;border-radius:999px;padding:6px 8px 6px 13px}
+.tg button{width:20px;height:20px;border-radius:50%;font-size:14px;line-height:1;color:#3C4043}
+.tg button:hover{background:#3C4043;color:#fff}
 .tagsug{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:4px}
 .tagsug button{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;text-transform:none;color:var(--ink-3);border:1.5px dashed var(--line);
   border-radius:999px;padding:5px 12px}
@@ -196,7 +196,7 @@ a{color:inherit}
 .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);background:#202124;color:#fff;border-radius:999px;
   padding:14px 26px;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
   z-index:600;animation:tin .3s;display:flex;align-items:center;gap:18px;white-space:nowrap}
-.toast .undo{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#D7AEFB;padding:2px 4px}
+.toast .undo{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#DADCE0;padding:2px 4px}
 .toast .undo:hover{color:#fff;text-decoration:underline}
 @keyframes tin{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(max-width:760px){body{padding:0 18px 80px}.dump textarea{padding-right:0}.dump-key{display:none}.sheet,.sheet.detail{padding:26px 22px}.frow{flex-direction:column;gap:0}.frow .f.year{flex:1}}
