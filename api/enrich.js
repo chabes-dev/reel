@@ -1,5 +1,5 @@
 import { authorized, denied, json } from './_auth.js';
-import { readUsage, addUsage, overCap, estimate } from './_usage.js';
+import { readUsage, addUsage, overCap, estimate, gatewayToken } from './_usage.js';
 
 /* Given a YouTube ad, find brand, campaign, agency, year, market and category.
    Reads what YouTube says about the video, then lets Claude search the web (trade press,
@@ -44,7 +44,7 @@ export async function POST(request) {
   const vid = String(q.vid || '');
   if (!/^[A-Za-z0-9_-]{11}$/.test(vid)) return json({ error: 'bad id' }, 400);
 
-  const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+  const token = gatewayToken(request);
   if (!token) return json({ error: 'AI Gateway not available on this deployment' }, 503);
 
   const usage = await readUsage();

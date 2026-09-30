@@ -29,8 +29,12 @@ export async function addUsage(u, usd, searches) {
 export const overCap = u => u.ads >= u.limitAds || u.usd >= u.limitUsd;
 
 /* what Vercel itself reports: remaining AI Gateway credit and lifetime spend, in USD */
-export async function gatewayCredits() {
-  const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+/* On Vercel the short-lived OIDC token rides on each request as a header; locally it may be an env var */
+export const gatewayToken = request =>
+  process.env.AI_GATEWAY_API_KEY || request.headers.get('x-vercel-oidc-token') || process.env.VERCEL_OIDC_TOKEN || '';
+
+export async function gatewayCredits(request) {
+  const token = gatewayToken(request);
   if (!token) return { error: 'no AI Gateway token on this deployment' };
   try {
     const r = await fetch('https://ai-gateway.vercel.sh/v1/credits', {
