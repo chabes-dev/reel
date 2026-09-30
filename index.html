@@ -681,15 +681,16 @@ async function enrich(i,manual){
     if(r.sources&&r.sources.length)i.sources=r.sources;
     i.enriched=Date.now();touch(i);
   }
-  i.autoMsg=err?"couldn't search: "+err:filled.length?'found '+filled.join(', '):'nothing new found on the web';
+  i.autoMsg=(err?"couldn't search: "+err:filled.length?'found '+filled.join(', '):'nothing new found on the web')+(r&&r.note&&!err?' · '+r.note:'');
   refreshItem(i.id);
   if(manual||OPEN===i.id||filled.length)toast(i.autoMsg);
 }
 function drawAuto(i){
   const b=mlayer.querySelector('#autobar');if(!b)return;
   const busy=ENRICHING.has(i.id)||PENDING.has(i.id);
-  const src=(i.sources||[]).map(s=>{const u=typeof s==='string'?s:s.url;let h=typeof s==='string'?'':s.title;
+  const src=(i.sources||[]).map((s,k)=>{const u=typeof s==='string'?s:s.url;let h=typeof s==='string'?'':s.title;
     if(!h)try{h=new URL(u).hostname}catch(e){h=u}
+    if(/vertexaisearch|googleapis/.test(h))h='source '+(k+1);
     return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(String(h).replace(/^www\./,''))}</a>`}).join(' · ');
   b.innerHTML=`<button class="autobtn" id="autogo" ${busy?'disabled':''}>✦ ${i.enriched?'Search the web again':'Auto-fill from the web'}</button>
     <span class="automsg ${busy?'busy':''}">${ENRICHING.has(i.id)?'searching YouTube, trade press, Ads of the World…'

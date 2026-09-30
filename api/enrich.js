@@ -46,45 +46,66 @@ const failure = (status, body, who) => {
   return err;
 };
 
-/* Google Gemini with Google Search grounding — free tier, no card. Picks the newest stable Flash model
-   the key can use, unless GEMINI_MODEL says otherwise. */
+/* Google Gemini with Google Search grounding — free tier, no card. Free keys only get search on some
+   models (and Google moves that line), so try stable Flash models newest-first and remember the first that
+   answers with search on. If none will search, fall back to the newest one answering from what it knows. */
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
-let geminiModel = process.env.GEMINI_MODEL || '';
-async function pickGeminiModel(key) {
-  if (geminiModel) return geminiModel;
-  const r = await fetch(`${GEMINI}/models?pageSize=1000&key=${key}`, { signal: AbortSignal.timeout(8000) });
+let geminiWorks = process.env.GEMINI_MODEL || '';
+async function geminiCandidates(key) {
+  const r = await fetch(`${GEMINI}/models?pageSize=1000`, { headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw failure(r.status, await r.text(), 'Google');
   const names = ((await r.json()).models || [])
     .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => m.name.replace(/^models\//, ''));
   const ver = n => +(n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1];
-  const rank = [/^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-flash-(preview|latest)/, /^gemini-[\d.]+-flash(?!-lite)/, /^gemini-flash-latest$/];
-  for (const re of rank) {
-    const hit = names.filter(n => re.test(n)).sort((x, y) => ver(y) - ver(x))[0];
-    if (hit) return (geminiModel = hit);
-  }
-  throw new Error('no Gemini Flash model available to this key');
+  const stable = names.filter(n => /^gemini-[\d.]+-flash$/.test(n)).sort((x, y) => ver(y) - ver(x));
+  return [...new Set([...stable, ...names.filter(n => n === 'gemini-flash-latest')])];
 }
-async function askGemini(prompt, key) {
-  const model = await pickGeminiModel(key);
-  const r = await fetch(`${GEMINI}/models/${model}:generateContent?key=${key}`, {
+/* the free tier is sometimes "overloaded" for a few seconds — retry those twice before giving up */
+async function geminiCall(key, model, prompt, search) {
+  for (let k = 0; ; k++) {
+    const r = await geminiOnce(key, model, prompt, search);
+    if ((r.status !== 503 && r.status !== 500) || k === 2) return r;
+    await new Promise(res => setTimeout(res, 1500 * (k + 1)));
+  }
+}
+async function geminiOnce(key, model, prompt, search) {
+  return fetch(`${GEMINI}/models/${model}:generateContent`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      tools: [{ google_search: {} }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 1500 },
+      ...(search ? { tools: [{ google_search: {} }] } : {}),
+      generationConfig: { temperature: 0.2, maxOutputTokens: 2000, thinkingConfig: { thinkingBudget: 512 } },
     }),
-    signal: AbortSignal.timeout(80000),
-  });
-  if (!r.ok) throw failure(r.status, await r.text(), 'Google');
+    signal: AbortSignal.timeout(75000),
+  }).catch(e => { throw new Error(e.name === 'TimeoutError' ? 'Google took too long — try again' : e.message); });
+}
+async function askGemini(prompt, key) {
+  const models = geminiWorks ? [geminiWorks] : await geminiCandidates(key);
+  let r, last, search = true;
+  for (const m of models) {
+    r = await geminiCall(key, m, prompt, true);
+    if (r.ok) { geminiWorks = m; break; }
+    last = failure(r.status, await r.text(), 'Google');
+    if (r.status !== 429 && r.status !== 403 && r.status !== 404) throw last;
+    r = null;
+  }
+  if (!r && geminiWorks) { geminiWorks = ''; return askGemini(prompt, key); }   /* remembered model stopped working */
+  if (!r && models[0]) {
+    search = false;
+    r = await geminiCall(key, models[0], prompt, false);
+    if (!r.ok) throw failure(r.status, await r.text(), 'Google');
+  }
+  if (!r) throw last || new Error('no Gemini Flash model available to this key');
   const j = await r.json();
   const c = (j.candidates || [])[0] || {};
   const text = ((c.content && c.content.parts) || []).map(p => p.text || '').join('\n');
   const g = c.groundingMetadata || {};
   const sources = (g.groundingChunks || []).filter(x => x.web && x.web.uri)
     .map(x => ({ url: x.web.uri, title: x.web.title || '' }));
-  return { found: parseAnswer({ content: [{ type: 'text', text }] }), sources, usd: 0, searches: (g.webSearchQueries || []).length };
+  return { found: parseAnswer({ content: [{ type: 'text', text }] }), sources, usd: 0,
+    searches: (g.webSearchQueries || []).length, note: search ? '' : 'no web search today — answered from memory, check it' };
 }
 
 /* Claude through Vercel AI Gateway — needs a card on the Vercel account to unlock its free credit */
@@ -160,6 +181,7 @@ Use "" for anything you can't find with reasonable confidence. Never guess an ag
   if (out.category && !CATEGORIES.includes(out.category)) out.category = 'Other';
   out.sources = (res.sources && res.sources.length ? res.sources : (Array.isArray(found.sources) ? found.sources : []))
     .filter(u => typeof u === 'string' ? /^https?:\/\//.test(u) : u && /^https?:\/\//.test(u.url)).slice(0, 3);
+  if (res.note) out.note = res.note;
   out.usage = now;
   return json(out);
 }
