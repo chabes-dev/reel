@@ -688,8 +688,9 @@ async function enrich(i,manual){
 function drawAuto(i){
   const b=mlayer.querySelector('#autobar');if(!b)return;
   const busy=ENRICHING.has(i.id)||PENDING.has(i.id);
-  const src=(i.sources||[]).map((u,k)=>{let h=u;try{h=new URL(u).hostname.replace(/^www\./,'')}catch(e){}
-    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`}).join(' · ');
+  const src=(i.sources||[]).map(s=>{const u=typeof s==='string'?s:s.url;let h=typeof s==='string'?'':s.title;
+    if(!h)try{h=new URL(u).hostname}catch(e){h=u}
+    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(String(h).replace(/^www\./,''))}</a>`}).join(' · ');
   b.innerHTML=`<button class="autobtn" id="autogo" ${busy?'disabled':''}>✦ ${i.enriched?'Search the web again':'Auto-fill from the web'}</button>
     <span class="automsg ${busy?'busy':''}">${ENRICHING.has(i.id)?'searching YouTube, trade press, Ads of the World…'
       :i.autoMsg?esc(i.autoMsg)+(src?' · from '+src:''):src?'from '+src:'fills the empty fields · you can edit anything'}</span>`;
@@ -780,6 +781,7 @@ async function loadUsage(){try{USAGE=await api('GET','/api/usage');drawUsage()}c
 function usageText(){
   if(!USAGE)return '';
   const c=USAGE.credits&&USAGE.credits.balance!=null?` · Vercel AI credit left $${(+USAGE.credits.balance).toFixed(2)}`:'';
+  if(USAGE.provider==='gemini')return `auto-fill ${USAGE.ads} of ${USAGE.limitAds} this month · free (Google Gemini)`;
   return `auto-fill ${USAGE.ads} of ${USAGE.limitAds} this month · ~$${(+USAGE.usd).toFixed(2)} of $${(+USAGE.limitUsd).toFixed(2)} cap${c}`;
 }
 function drawUsage(){const m=document.getElementById('usagemeta');if(!m)return;const t=usageText();m.textContent=t;
