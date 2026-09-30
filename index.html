@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F8F7FB" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Reel" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-180.png" />
 <title>Reel</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23fff'/%3E%3Crect x='10' y='16' width='44' height='32' rx='6' fill='%233C4043'/%3E%3Cpath d='M28 25 L40 32 L28 39 Z' fill='%23fff'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -227,7 +233,61 @@ a{color:inherit}
 .toast .undo{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#DADCE0;padding:2px 4px}
 .toast .undo:hover{color:#fff;text-decoration:underline}
 @keyframes tin{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
-@media(max-width:760px){body{padding:0 18px 80px}.dump textarea{padding-right:0}.dump-key{display:none}.sheet,.sheet.detail{padding:26px 22px}.frow{flex-direction:column;gap:0}.frow .f.year{flex:1}}
+.pastebtn{display:none}
+.touch-only{display:none}
+@media(hover:none){.touch-only{display:inline}.desk-only{display:none}}
+@media(max-width:760px){
+  body{padding:0 16px calc(80px + env(safe-area-inset-bottom));font-size:17px}
+  .top{padding:calc(22px + env(safe-area-inset-top)) 0 4px;align-items:center}
+  .mark{font-size:32px}.mark span{display:none}
+  .dump{display:flex;align-items:flex-end;gap:10px}
+  .dump textarea{padding:14px 0;font-size:22px;min-height:56px}
+  .dump-key{display:none}
+  .pastebtn{display:block;flex:none;margin-bottom:12px;font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    background:var(--hot);color:#fff;border-radius:999px;padding:11px 16px}
+  .tools{margin:20px 0 12px;gap:10px}
+  .search{min-width:0;flex-basis:100%;padding:10px 18px}
+  .search input{font-size:16px}
+  .sorts{flex-basis:100%}.sorts button{flex:1;padding:9px 4px;font-size:12px;letter-spacing:.06em}
+  .filters{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px 16px;padding:2px 16px 6px;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .fchip{flex:none}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+  .card:hover{transform:none}
+  .cbody{padding:9px 11px 12px}
+  .cbrand{font-size:10.5px;letter-spacing:.07em;padding-right:12px}
+  .ctitle{font-size:15.5px;margin-top:3px}
+  .vdot{top:13px;right:10px;width:7px;height:7px}
+  .badge{left:6px;top:6px;font-size:9.5px;padding:3px 7px}
+  .ccopy{right:6px;top:6px;height:30px;padding:0 10px;font-size:10px}
+  .ccopy .lbl{display:none}
+  .empty h3{font-size:26px}.empty p{font-size:16px}
+  .foot{margin-top:44px;gap:10px}.foot .btn{flex:1 1 100%}
+  .btn{padding:12px 18px;font-size:13px}
+  .veil{padding:0;display:block}
+  .veil:has(.sheet:not(.detail)){display:flex;align-items:flex-end}
+  .sheet{border-radius:18px 18px 0 0;margin-top:auto}
+  .sheet,.sheet.detail{padding:22px 18px}
+  .sheet.detail{border-radius:0;min-height:100%;margin:0;padding:calc(16px + env(safe-area-inset-top)) 16px 0;box-shadow:none}
+  .dgrid{display:flex;flex-direction:column;gap:0;align-items:stretch}
+  .dgrid>div{display:contents}
+  .dthumb{order:1;border-radius:12px}
+  .wrow{order:2;margin-top:12px}
+  #dstatus{order:3}
+  .dgrid .frow,.dgrid>div>.f,#brandsug,#autobar{order:4}
+  .dgrid .frow:first-child{margin-top:22px}
+  .dgrid .notes{order:5}
+  .dsec-h{order:6}.finds{order:7}.ytmeta{order:8;margin-bottom:10px}
+  .watch,.copy{padding:13px 12px;font-size:12.5px;letter-spacing:.07em}
+  .f{margin-bottom:18px}
+  .f input,.f textarea{font-size:17px}
+  .f input.big{font-size:24px}
+  .notes textarea{font-size:18px;min-height:160px;padding:14px 16px}
+  .frow{flex-direction:column;gap:0}.frow .f.year{flex:1}
+  .sheet.detail .sheet-acts{position:sticky;bottom:0;margin:0 -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:var(--card);border-top:1.5px solid var(--line-soft);z-index:2}
+  .toast{white-space:normal;max-width:calc(100% - 32px);text-align:center;bottom:calc(24px + env(safe-area-inset-bottom));font-size:12.5px;padding:12px 20px}
+}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -407,8 +467,9 @@ function render(){
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here — download the file and open it from your own Mac.</div>`:''}
     ${STORE_FULL?`<div class="alarm"><b>Storage is full.</b> Your latest changes aren't saved. Export a backup now — thumbnails take most of the space.</div>`:''}
     <div class="dump" id="dumpbox">
-      <textarea id="cap" rows="1" placeholder="Paste a YouTube link — or a whole email full of them"></textarea>
+      <textarea id="cap" rows="1" placeholder="${TOUCH?'Paste a YouTube link':'Paste a YouTube link — or a whole email full of them'}"></textarea>
       <div class="dump-key">⏎ save · or ⌘V anywhere</div>
+      <button class="pastebtn" id="pastebtn">Paste link</button>
     </div>
     <div class="dumpmsg" id="dumpmsg"></div>
     ${n&&!cloudKey()&&canMerge()?`<div class="cloudbar"><span>Your ${n} ads live only in this browser.</span>
@@ -421,7 +482,7 @@ function render(){
       <div class="filters" id="filters"></div>
       <div id="gridwrap"></div>`
     :`<div class="empty"><h3>Nothing saved yet.</h3>
-      <p>Paste a YouTube link above — or press <b>⌘V</b> anywhere on this page. The title and thumbnail fill in by themselves; everything else can wait.</p>
+      <p><span class="desk-only">Paste a YouTube link above — or press <b>⌘V</b> anywhere on this page.</span><span class="touch-only">Copy a link in the YouTube app (Share → Copy link), then tap <b>Paste link</b>.</span> The title and thumbnail fill in by themselves; everything else can wait.</p>
       <p>Links from Outlook work too. Paste the whole email and every YouTube link in it gets saved.</p></div>`}
     <footer class="foot">
       <button class="meta" id="cloudmeta"></button>
@@ -450,7 +511,7 @@ function card(i){
   return `<article class="card ${i.status==='gone'?'gone':''} ${FRESH.has(i.id)?'landing':''}" data-open="${i.id}" tabindex="0">
     <div class="thumb">${img?`<img src="${esc(img)}" alt="">`:`<div class="noimg ${p?'pending':''}">${p?'fetching…':'no thumbnail'}</div>`}
       ${i.status==='gone'?'<span class="badge">Taken down</span>':''}
-      <button class="ccopy" data-copy="${i.id}" title="Copy the YouTube link to share">⧉ Copy link</button></div>
+      <button class="ccopy" data-copy="${i.id}" title="Share the YouTube link">${SHARE_ICON}<span class="lbl"> ${SHARE_LABEL}</span></button></div>
     <div class="cbody">
       <div class="cbrand ${i.brand?'':'guess'}">${brand||'&nbsp;'}${i.year?' · '+esc(i.year):''}</div>
       <div class="ctitle">${esc(i.campaign||i.title||(p?'…':'Untitled'))}</div>
@@ -480,13 +541,19 @@ function wireCard(c){
 }
 /* the short youtu.be form reads well in a chat and still previews in WhatsApp, iMessage, Slack */
 const shareUrl=i=>'https://youtu.be/'+i.vid;
+/* on a phone, the native share sheet (WhatsApp, Messages…) beats copy-then-paste */
+const TOUCH=matchMedia('(hover:none)').matches;
+const CAN_SHARE=!!navigator.share&&TOUCH;
+const SHARE_ICON=CAN_SHARE?'↗':'⧉',SHARE_LABEL=CAN_SHARE?'Share':'Copy link';
 async function copyLink(i,btn){
   if(!i)return;const u=shareUrl(i);let ok=false;
+  if(CAN_SHARE){try{await navigator.share({title:[i.brand,i.campaign||i.title].filter(Boolean).join(' — ')||'An ad',url:u});return}
+    catch(e){if(e&&e.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(u);ok=true}
   catch(e){const t=document.createElement('textarea');t.value=u;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
     try{ok=document.execCommand('copy')}catch(x){}t.remove()}
   toast(ok?'link copied — paste it anywhere':"couldn't copy — "+u);
-  if(btn&&ok){btn.classList.add('done');btn.textContent='✓ Copied';setTimeout(()=>{btn.classList.remove('done');btn.textContent='⧉ Copy link'},1600)}
+  if(btn&&ok){btn.classList.add('done');btn.textContent='✓ Copied';setTimeout(()=>{btn.classList.remove('done');btn.textContent=SHARE_ICON+' '+SHARE_LABEL},1600)}
 }
 /* update one item where it's shown, without redrawing everything */
 function refreshItem(id){
@@ -514,7 +581,7 @@ function dthumbInner(i){
   const img=i.thumb||i.thumbSrc,p=PENDING.has(i.id);
   return (img?`<img src="${esc(img)}" alt="">`:`<div class="noimg ${p?'pending':''}">${p?'fetching…':'no thumbnail'}</div>`)
     +(!i.thumb&&i.thumbSrc?'<span class="remote" title="Shown from YouTube, not stored — it will disappear with the video">not stored</span>':'')
-    +`<div class="dthumb-hint">Drop or paste an image to replace</div>`;
+    +`<div class="dthumb-hint">${matchMedia('(hover:none)').matches?'Tap to replace the image':'Drop or paste an image to replace'}</div>`;
 }
 function ytmetaHtml(i){
   return `<b>On YouTube</b>${i.title?esc(i.title):'<i>title not fetched</i>'}${i.channel?' — '+esc(i.channel):''}<br>
@@ -596,7 +663,7 @@ function openDetail(id){
         <div class="dthumb ${i.status==='gone'?'gone':''}" id="dthumb" tabindex="0">${dthumbInner(i)}</div>
         <div class="wrow">
           <a class="watch" href="${esc(i.url)}" target="_blank" rel="noopener">▶ Watch on YouTube</a>
-          <button class="copy" id="dcopy" title="Copy ${esc(shareUrl(i))} to share">⧉ Copy link</button>
+          <button class="copy" id="dcopy" title="Share ${esc(shareUrl(i))}">${SHARE_ICON} ${SHARE_LABEL}</button>
         </div>
         <div class="dstatus" id="dstatus"></div>
         <div class="dsec-h">Find it again</div>
@@ -640,6 +707,8 @@ function openDetail(id){
       f.onblur=()=>{const v=(i[f.dataset.f]||'').trim();if(v!==i[f.dataset.f]){i[f.dataset.f]=v;touch(i)}};
     });
     const th=el.querySelector('#dthumb');
+    th.onclick=()=>{if(!matchMedia('(hover:none)').matches)return;
+      const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=()=>setThumbFromFile(f.files&&f.files[0],i);f.click()};
     th.ondragover=e=>{e.preventDefault();th.classList.add('over')};
     th.ondragleave=()=>th.classList.remove('over');
     th.ondrop=e=>{e.preventDefault();th.classList.remove('over');const f=e.dataTransfer.files&&e.dataTransfer.files[0];setThumbFromFile(f,i)};
@@ -647,7 +716,7 @@ function openDetail(id){
     el.querySelector('#ddel').onclick=()=>{
       const idx=S.items.indexOf(i);S.items.splice(idx,1);S.deleted[i.id]=Date.now();save();closeDetail();
       toastUndo('deleted',()=>{delete S.deleted[i.id];S.items.splice(Math.min(idx,S.items.length),0,i);touch(i);render()})};
-    if(!i.brand){const b=el.querySelector('[data-f="brand"]');if(b)b.focus()}
+    if(!i.brand&&!TOUCH){const b=el.querySelector('[data-f="brand"]');if(b)b.focus()}   /* no surprise keyboard on phones */
   },'detail');
 }
 function closeDetail(){OPEN=null;closeSheet();render();cloudFlush()}
@@ -921,6 +990,11 @@ function wireTop(){
   /* pasting a link here saves it straight away — no Enter needed */
   cap.onpaste=()=>setTimeout(()=>{const c=document.getElementById('cap');if(!c)return;
     if(extractIds(c.value).length&&capture(c.value,box)){const n=document.getElementById('cap');if(n){n.value='';n.focus()}}},0);
+  const pb=document.getElementById('pastebtn');
+  if(pb)pb.onclick=async()=>{let t='';
+    try{t=await navigator.clipboard.readText()}catch(e){}
+    if(t&&extractIds(t).length){capture(t,box);return}
+    cap.focus();dumpMsg(t?'No YouTube link on the clipboard.':'Long-press here and choose Paste.',true)};
   const q=document.getElementById('q');
   if(q)q.oninput=()=>{S.ui.q=q.value;drawGrid()};
   app.querySelectorAll('[data-sort]').forEach(b=>b.onclick=()=>{S.ui.sort=b.dataset.sort;save();render()});
@@ -946,7 +1020,14 @@ document.addEventListener('paste',e=>{
   if(t&&extractIds(t).length){e.preventDefault();capture(t,document.getElementById('dumpbox'))}
 });
 render();
-document.addEventListener('DOMContentLoaded',()=>{render();if(cloudKey())cloudPull()});
+/* links arriving from the phone's share sheet (Android) or an iOS Shortcut: /?url=… or /?text=… */
+function takeShared(){
+  const p=new URLSearchParams(location.search),t=['url','text','title','link'].map(k=>p.get(k)||'').join(' ');
+  if(!t.trim())return;
+  history.replaceState(null,'',location.pathname);
+  if(extractIds(t).length)capture(t,document.getElementById('dumpbox'));else toast('no YouTube link in what was shared');
+}
+document.addEventListener('DOMContentLoaded',()=>{render();takeShared();if(cloudKey())cloudPull()});
 </script>
 <script type="module">
 /* shared with the server so both sides merge the same way; a downloaded copy without it simply runs local-only */

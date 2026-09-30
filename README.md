@@ -25,6 +25,12 @@ YouTube links die when brands take a campaign offline. Reel stores a *fingerprin
 - Metadata via YouTube oEmbed (fallback: noembed.com); thumbnails from i.ytimg.com
 - Paste accepts whole emails — Outlook safelinks and `&amp;` are unwrapped
 
+## Phone
+- Layout: two-column grid, full-screen ad view with a sticky Done bar, fields before the search buttons, no auto-focused keyboard
+- **Paste link** button next to the capture box (phones have no ⌘V); tapping the thumbnail replaces it
+- Share buttons open the native share sheet (WhatsApp, Messages…) instead of copying
+- Installable: `manifest.webmanifest` + icons. On Android, once installed, Reel appears in YouTube's Share menu (Web Share Target). Any `/?url=…` or `/?text=…` link saves the YouTube link inside it — usable from an iOS Shortcut
+
 ## Keyboard
 - `⌘V` anywhere — save any YouTube links on the clipboard
 - `⧉ Copy link` on a card or in an ad copies `https://youtu.be/<id>` for sharing
