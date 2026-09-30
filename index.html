@@ -147,6 +147,34 @@ a{color:inherit}
 .watch{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:14px;border-radius:999px;background:var(--ink);color:#fff;
   text-decoration:none;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;transition:.18s}
 .watch:hover{filter:brightness(1.25)}
+.wrow{display:flex;gap:8px;margin-top:14px}
+.wrow .watch{flex:1;margin-top:0}
+.copy{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);
+  font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);transition:.18s;white-space:nowrap}
+.copy:hover{border-color:var(--hot);color:var(--hot)}
+.copy.done{background:var(--hot);border-color:var(--hot);color:#fff}
+.ccopy{position:absolute;right:10px;top:10px;height:34px;padding:0 12px;border-radius:999px;background:rgba(32,33,36,.78);color:#fff;
+  font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:0;transition:.15s;backdrop-filter:blur(4px)}
+.card:hover .ccopy,.card:focus-within .ccopy{opacity:1}
+.ccopy:hover{background:#202124}
+@media(hover:none){.ccopy{opacity:1}}
+.autobar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:-4px 0 22px;min-height:20px}
+.autobtn{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hot);background:var(--hot-soft);
+  border-radius:999px;padding:7px 14px}
+.autobtn:hover{background:var(--hot);color:#fff}
+.autobtn:disabled{opacity:.6;cursor:default;background:var(--hot-soft);color:var(--hot)}
+.automsg{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.automsg.busy{animation:breathe 1.4s ease-in-out infinite}
+.automsg a{color:var(--ink-3)}
+.f .autotag{display:none;margin-left:8px;font-size:10.5px;letter-spacing:.1em;padding:2px 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber-ink);vertical-align:1px}
+.f.auto .autotag{display:inline-block}
+.cloudbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px;padding:12px 18px;border-radius:var(--r);background:var(--amber-soft);
+  color:var(--amber-ink);font-size:16px}
+.cloudbar .linkbtn{color:var(--amber-ink)}
+.foot .meta.ok{color:var(--ink-2)}
+.sheet input.pass{display:block;width:100%;font-family:var(--mono);font-size:18px;padding:12px 16px;border:2px solid var(--line);border-radius:12px;margin:-6px 0 18px}
+.sheet input.pass:focus{border-color:var(--hot)}
+.sheet .fine{font-size:14.5px;color:var(--ink-3);margin:-8px 0 20px}
 .dstatus{display:flex;gap:6px;margin-top:12px}
 .seg{flex:1;font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:10px;border-radius:999px;
   border:1.5px solid var(--line);color:var(--ink-3);transition:.15s}
@@ -188,8 +216,8 @@ a{color:inherit}
 .tagsug button{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;text-transform:none;color:var(--ink-3);border:1.5px dashed var(--line);
   border-radius:999px;padding:5px 12px}
 .tagsug button:hover{border-color:var(--hot);color:var(--hot);border-style:solid}
-.notes{margin-top:30px;margin-bottom:24px}
-.notes textarea{font-family:var(--serif);font-size:22px;font-weight:300;line-height:1.5;min-height:180px;resize:vertical;
+.notes{margin-top:8px;margin-bottom:24px}
+.notes textarea{font-family:var(--serif);font-size:22px;font-weight:300;line-height:1.5;min-height:220px;resize:vertical;
   background:var(--g50);border:2px solid var(--line-soft);border-radius:14px;padding:18px 20px;margin-top:10px}
 .notes textarea:focus{background:var(--card)}
 
@@ -213,7 +241,8 @@ const KEY='reel_v1';
 const STORE_LIMIT=5000000;          /* browsers give a local file roughly 5M characters */
 let STORE_OK=true,STORE_FULL=false;
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){STORE_OK=false;return null}}
-function save(){
+function save(){cloudDirty();return saveLocal()}
+function saveLocal(){
   try{localStorage.setItem(KEY,JSON.stringify(S));STORE_FULL=false;return true}
   catch(e){
     if(e&&(e.name==='QuotaExceededError'||e.code===22)){if(!STORE_FULL){STORE_FULL=true;setTimeout(render,0)}}
@@ -224,7 +253,10 @@ let S=load()||{items:[],lastBackup:null,ui:{}};
 S.items=Array.isArray(S.items)?S.items:[];
 S.ui=Object.assign({sort:'new'},S.ui||{});
 S.ui.q='';S.ui.tags=[];S.ui.flt=null;          /* searches don't survive a reload */
-S.items.forEach(i=>{if(!Array.isArray(i.tags))i.tags=[];if(!i.status)i.status='unknown'});
+S.deleted=S.deleted&&typeof S.deleted==='object'?S.deleted:{};
+S.items.forEach(i=>{if(!Array.isArray(i.tags))i.tags=[];if(!i.status)i.status='unknown';if(i.category==null)i.category=''});
+/* every change to an ad goes through here, so the newest edit wins when two devices sync */
+function touch(i){i.updated=Date.now();save()}
 
 /* ============ helpers ============ */
 const nid=()=>Math.random().toString(36).slice(2,10);
@@ -305,9 +337,10 @@ async function hydrate(it){
   if(m.ok){if(!it.title)it.title=m.title;if(!it.channel)it.channel=m.channel;it.status='live'}
   else if(m.gone)it.status='gone';
   if(!it.thumb){const t=await grabThumb(it.vid);
-    if(t&&t.data){it.thumb=t.data;it.thumbSrc=''}else if(t&&t.remote)it.thumbSrc=t.remote}
+    if(t&&t.data){it.thumb=t.data;it.thumbSrc='';it.thumbV=Date.now();it.thumbUp=false}else if(t&&t.remote)it.thumbSrc=t.remote}
   it.checked=Date.now();
-  PENDING.delete(it.id);save();refreshItem(it.id);
+  PENDING.delete(it.id);touch(it);refreshItem(it.id);
+  if(!it.enriched&&cloudKey())enrich(it);
 }
 
 /* ============ capture ============ */
@@ -318,7 +351,7 @@ function capture(text,src){
   ids.forEach(vid=>{
     const had=S.items.find(i=>i.vid===vid);if(had){dupes.push(had);return}
     const it={id:nid(),vid,url:canon(vid),title:'',channel:'',thumb:'',thumbSrc:'',
-      brand:'',campaign:'',agency:'',year:'',market:'',line:'',tags:[],notes:'',
+      brand:'',campaign:'',agency:'',year:'',market:'',category:'',line:'',tags:[],notes:'',
       status:'unknown',created:Date.now(),updated:Date.now()};
     S.items.push(it);made.push(it);FRESH.add(it.id);
   });
@@ -339,7 +372,7 @@ function dumpMsg(t,warn){const d=document.getElementById('dumpmsg');if(!d)return
   d.textContent=t;d.classList.toggle('warn',!!warn);clearTimeout(dumpMsg.k);dumpMsg.k=setTimeout(()=>{if(d)d.textContent=''},4000)}
 
 /* ============ search, filter, sort ============ */
-const hay=i=>fold([i.brand,i.campaign,i.title,i.channel,i.agency,i.year,i.market,i.line,i.notes,(i.tags||[]).join(' ')].join(' '));
+const hay=i=>fold([i.brand,i.campaign,i.title,i.channel,i.agency,i.year,i.market,i.category,i.line,i.notes,(i.tags||[]).join(' ')].join(' '));
 function visible(){
   const words=fold(S.ui.q).split(/\s+/).filter(Boolean);
   let l=S.items.filter(i=>{
@@ -378,6 +411,8 @@ function render(){
       <div class="dump-key">⏎ save · or ⌘V anywhere</div>
     </div>
     <div class="dumpmsg" id="dumpmsg"></div>
+    ${n&&!cloudKey()&&canMerge()?`<div class="cloudbar"><span>Your ${n} ads live only in this browser.</span>
+      <button class="linkbtn" id="cloudon">Turn on cloud backup →</button></div>`:''}
     ${n?`<div class="tools">
         <label class="search"><span>⌕</span><input id="q" placeholder="Search brand, agency, a line you remember, your notes…" value="${esc(S.ui.q)}" /></label>
         <div class="sorts">${[['new','Newest'],['old','Oldest'],['brand','Brand'],['year','Year']].map(([k,l])=>
@@ -389,14 +424,15 @@ function render(){
       <p>Paste a YouTube link above — or press <b>⌘V</b> anywhere on this page. The title and thumbnail fill in by themselves; everything else can wait.</p>
       <p>Links from Outlook work too. Paste the whole email and every YouTube link in it gets saved.</p></div>`}
     <footer class="foot">
-      <span class="meta ${ba===null||ba>13?'warn':''}">${ba===null?'never backed up':ba===0?'backed up today':'last backup '+ba+' days ago'}</span>
+      <button class="meta" id="cloudmeta"></button>
+      <span class="meta ${!cloudKey()&&(ba===null||ba>13)?'warn':''}">${ba===null?'no file backup yet':ba===0?'file backup today':'file backup '+ba+' days ago'}</span>
       <span class="meta ${pct>80?'warn':''}">storage ${pct}% used</span>
       <span class="sp"></span>
       ${n?`<button class="btn" id="check" ${CHECKING?'disabled':''}>${CHECKING?'Checking '+CHECKING:'Check which links still work'}</button>`:''}
       <button class="btn" id="exp">↓ Export backup</button>
       <button class="btn" id="imp">↑ Import backup</button>
     </footer></div>`;
-  wireTop();
+  wireTop();drawCloudMeta();
   if(n)drawGrid();
 }
 function filtersHtml(){
@@ -412,7 +448,8 @@ function card(i){
   const brand=i.brand?esc(i.brand):i.channel?esc(i.channel)+' ?':'';
   return `<article class="card ${i.status==='gone'?'gone':''} ${FRESH.has(i.id)?'landing':''}" data-open="${i.id}" tabindex="0">
     <div class="thumb">${img?`<img src="${esc(img)}" alt="">`:`<div class="noimg ${p?'pending':''}">${p?'fetching…':'no thumbnail'}</div>`}
-      ${i.status==='gone'?'<span class="badge">Taken down</span>':''}</div>
+      ${i.status==='gone'?'<span class="badge">Taken down</span>':''}
+      <button class="ccopy" data-copy="${i.id}" title="Copy the YouTube link to share">⧉ Copy link</button></div>
     <div class="cbody">
       <div class="cbrand ${i.brand?'':'guess'}">${brand||'&nbsp;'}${i.year?' · '+esc(i.year):''}</div>
       <div class="ctitle">${esc(i.campaign||i.title||(p?'…':'Untitled'))}</div>
@@ -433,21 +470,41 @@ function drawGrid(){
   f.querySelectorAll('[data-flt]').forEach(b=>b.onclick=()=>{S.ui.flt=S.ui.flt===b.dataset.flt?null:b.dataset.flt;drawGrid()});
   g.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>{S.ui.q='';S.ui.tags=[];S.ui.flt=null;
     const q=document.getElementById('q');if(q)q.value='';drawGrid()});
-  g.querySelectorAll('[data-open]').forEach(c=>{c.onclick=()=>openDetail(c.dataset.open);
-    c.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();openDetail(c.dataset.open)}}});
+  g.querySelectorAll('[data-open]').forEach(wireCard);
+}
+function wireCard(c){
+  const id=c.dataset.open;
+  c.onclick=e=>{const b=e.target.closest('[data-copy]');if(b){e.stopPropagation();copyLink(byId(id));return}openDetail(id)};
+  c.onkeydown=e=>{if(e.key==='Enter'&&e.target===c){e.preventDefault();openDetail(id)}};
+}
+/* the short youtu.be form reads well in a chat and still previews in WhatsApp, iMessage, Slack */
+const shareUrl=i=>'https://youtu.be/'+i.vid;
+async function copyLink(i,btn){
+  if(!i)return;const u=shareUrl(i);let ok=false;
+  try{await navigator.clipboard.writeText(u);ok=true}
+  catch(e){const t=document.createElement('textarea');t.value=u;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
+    try{ok=document.execCommand('copy')}catch(x){}t.remove()}
+  toast(ok?'link copied — paste it anywhere':"couldn't copy — "+u);
+  if(btn&&ok){btn.classList.add('done');btn.textContent='✓ Copied';setTimeout(()=>{btn.classList.remove('done');btn.textContent='⧉ Copy link'},1600)}
 }
 /* update one item where it's shown, without redrawing everything */
 function refreshItem(id){
   const i=byId(id);if(!i)return;
   const c=app.querySelector(`.card[data-open="${id}"]`);
-  if(c){const tmp=document.createElement('div');tmp.innerHTML=card(i);const n=tmp.firstElementChild;n.classList.remove('landing');c.replaceWith(n);
-    n.onclick=()=>openDetail(id);n.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();openDetail(id)}}}
+  if(c){const tmp=document.createElement('div');tmp.innerHTML=card(i);const n=tmp.firstElementChild;n.classList.remove('landing');c.replaceWith(n);wireCard(n)}
   if(OPEN===id){
     const th=mlayer.querySelector('#dthumb');if(th){th.innerHTML=dthumbInner(i);th.classList.toggle('gone',i.status==='gone')}
     const ym=mlayer.querySelector('#ytmeta');if(ym)ym.innerHTML=ytmetaHtml(i);
     const cp=mlayer.querySelector('[data-f="campaign"]');if(cp&&!cp.value)cp.placeholder=i.title||'e.g. Shot on iPhone — Relay';
-    drawBrandSuggest(i);drawStatus(i);drawFinds(i);
+    drawBrandSuggest(i);drawStatus(i);drawFinds(i);drawAuto(i);syncInputs(i);
   }
+}
+/* values that arrive while the ad is open (auto-fill, another device) show up without clobbering what you're typing */
+function syncInputs(i){
+  mlayer.querySelectorAll('[data-f]').forEach(f=>{const k=f.dataset.f;
+    if(document.activeElement!==f&&f.value!==(i[k]||''))f.value=i[k]||'';
+    const w=f.closest('.f');if(w)w.classList.toggle('auto',(i.auto||[]).includes(k))});
+  const ti=mlayer.querySelector('#tagin');if(!ti||document.activeElement!==ti)drawTags(i);
 }
 
 /* ============ detail ============ */
@@ -489,14 +546,14 @@ function drawBrandSuggest(i){
   const s=mlayer.querySelector('#brandsug');if(!s)return;
   s.innerHTML=(!i.brand&&i.channel)?`<button class="suggest" id="usech">Brand is “${esc(i.channel)}”? Use it</button>`:'';
   const b=s.querySelector('#usech');
-  if(b)b.onclick=()=>{i.brand=i.channel;i.updated=Date.now();save();
+  if(b)b.onclick=()=>{i.brand=i.channel;i.auto=(i.auto||[]).filter(x=>x!=='brand');touch(i);
     const f=mlayer.querySelector('[data-f="brand"]');if(f)f.value=i.brand;drawBrandSuggest(i);drawFinds(i)};
 }
 function drawStatus(i){
   const s=mlayer.querySelector('#dstatus');if(!s)return;
   s.innerHTML=`<button class="seg ${i.status!=='gone'?'on':''}" data-st="live">Link works</button>
     <button class="seg ${i.status==='gone'?'on red':''}" data-st="gone">Taken down</button>`;
-  s.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{i.status=b.dataset.st;save();
+  s.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{i.status=b.dataset.st;touch(i);
     drawStatus(i);const th=mlayer.querySelector('#dthumb');if(th)th.classList.toggle('gone',i.status==='gone')});
 }
 function drawTags(i){
@@ -504,7 +561,7 @@ function drawTags(i){
   box.innerHTML=i.tags.map(t=>`<span class="tg">${esc(t)}<button data-untag="${esc(t)}" title="Remove">×</button></span>`).join('')
     +`<input id="tagin" placeholder="${i.tags.length?'':'humour, vo, craft, insight… ⏎ to add'}" />`;
   const inp=box.querySelector('#tagin');
-  const addTag=v=>{inp.value='';const t=normTag(v);if(t&&!i.tags.includes(t)){i.tags.push(t);i.updated=Date.now();save()}
+  const addTag=v=>{inp.value='';const t=normTag(v);if(t&&!i.tags.includes(t)){i.tags.push(t);touch(i)}
     drawTags(i);const n=mlayer.querySelector('#tagin');if(n)n.focus()};
   const showSug=()=>{
     const q=normTag(inp.value);
@@ -513,20 +570,20 @@ function drawTags(i){
     sug.querySelectorAll('[data-addtag]').forEach(b=>b.onclick=()=>addTag(b.dataset.addtag));
   };
   inp.oninput=()=>{if(inp.value.includes(',')){inp.value.split(',').slice(0,-1).forEach(v=>{const t=normTag(v);if(t&&!i.tags.includes(t))i.tags.push(t)});
-      const rest=inp.value.split(',').pop();inp.value='';save();drawTags(i);const n=mlayer.querySelector('#tagin');if(n){n.value=rest;n.focus()}return}
+      const rest=inp.value.split(',').pop();inp.value='';touch(i);drawTags(i);const n=mlayer.querySelector('#tagin');if(n){n.value=rest;n.focus()}return}
     showSug()};
   inp.onkeydown=e=>{
     if(e.key==='Enter'){e.preventDefault();if(inp.value.trim())addTag(inp.value)}
-    else if(e.key==='Backspace'&&!inp.value&&i.tags.length){i.tags.pop();save();drawTags(i);const n=mlayer.querySelector('#tagin');if(n)n.focus()}};
-  inp.onblur=()=>{if(!inp.isConnected)return;if(inp.value.trim()){const t=normTag(inp.value);if(t&&!i.tags.includes(t)){i.tags.push(t);save()}}};
+    else if(e.key==='Backspace'&&!inp.value&&i.tags.length){i.tags.pop();touch(i);drawTags(i);const n=mlayer.querySelector('#tagin');if(n)n.focus()}};
+  inp.onblur=()=>{if(!inp.isConnected)return;if(inp.value.trim()){const t=normTag(inp.value);if(t&&!i.tags.includes(t)){i.tags.push(t);touch(i)}}};
   box.onclick=e=>{if(e.target===box)inp.focus()};
-  box.querySelectorAll('[data-untag]').forEach(b=>b.onclick=()=>{i.tags=i.tags.filter(t=>t!==b.dataset.untag);save();drawTags(i)});
+  box.querySelectorAll('[data-untag]').forEach(b=>b.onclick=()=>{i.tags=i.tags.filter(t=>t!==b.dataset.untag);touch(i);drawTags(i)});
   showSug();
 }
 function setThumbFromFile(file,i){
   if(!file||!/^image\//.test(file.type))return;
   const r=new FileReader();
-  r.onload=()=>{const im=new Image();im.onload=()=>{i.thumb=toJpeg(im);i.thumbSrc='';i.updated=Date.now();save();refreshItem(i.id);toast('thumbnail replaced')};
+  r.onload=()=>{const im=new Image();im.onload=()=>{i.thumb=toJpeg(im);i.thumbSrc='';i.thumbV=Date.now();i.thumbUp=false;touch(i);refreshItem(i.id);toast('thumbnail replaced')};
     im.src=r.result};
   r.readAsDataURL(file);
 }
@@ -536,7 +593,10 @@ function openDetail(id){
   sheet(`<div class="dgrid">
       <div>
         <div class="dthumb ${i.status==='gone'?'gone':''}" id="dthumb" tabindex="0">${dthumbInner(i)}</div>
-        <a class="watch" href="${esc(i.url)}" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+        <div class="wrow">
+          <a class="watch" href="${esc(i.url)}" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+          <button class="copy" id="dcopy" title="Copy ${esc(shareUrl(i))} to share">⧉ Copy link</button>
+        </div>
         <div class="dstatus" id="dstatus"></div>
         <div class="dsec-h">Find it again</div>
         <div class="finds" id="finds"></div>
@@ -544,34 +604,39 @@ function openDetail(id){
       </div>
       <div>
         <div class="frow">
-          <label class="f">Brand<input class="big" data-f="brand" list="dl-brand" value="${esc(i.brand)}" placeholder="Apple" /></label>
-          <label class="f year">Year<input class="big" data-f="year" inputmode="numeric" value="${esc(i.year)}" placeholder="${new Date().getFullYear()}" /></label>
+          <label class="f">Brand${AUTO}<input class="big" data-f="brand" list="dl-brand" value="${esc(i.brand)}" placeholder="Apple" /></label>
+          <label class="f year">Year${AUTO}<input class="big" data-f="year" inputmode="numeric" value="${esc(i.year)}" placeholder="${new Date().getFullYear()}" /></label>
         </div>
         <div id="brandsug"></div>
-        <label class="f">Ad or campaign name<input data-f="campaign" value="${esc(i.campaign)}" placeholder="${esc(i.title||'e.g. Shot on iPhone — Relay')}" /></label>
+        <div class="autobar" id="autobar"></div>
+        <label class="f">Ad or campaign name${AUTO}<input data-f="campaign" value="${esc(i.campaign)}" placeholder="${esc(i.title||'e.g. Shot on iPhone — Relay')}" /></label>
         <div class="frow">
-          <label class="f">Agency<input data-f="agency" list="dl-agency" value="${esc(i.agency)}" /></label>
-          <label class="f">Market<input data-f="market" list="dl-market" value="${esc(i.market)}" placeholder="Brazil, Global…" /></label>
+          <label class="f">Agency${AUTO}<input data-f="agency" list="dl-agency" value="${esc(i.agency)}" /></label>
+          <label class="f">Market${AUTO}<input data-f="market" list="dl-market" value="${esc(i.market)}" placeholder="Brazil, Global…" /></label>
         </div>
-        <label class="f">Tagline or a line you remember<input class="serif" data-f="line" value="${esc(i.line)}"
+        <label class="f">Category${AUTO}<input data-f="category" list="dl-category" value="${esc(i.category)}" placeholder="Beverages, Automotive…" /></label>
+        <label class="f">Tagline or a line you remember${AUTO}<input class="serif" data-f="line" value="${esc(i.line)}"
           placeholder="The exact words — your best search key if it disappears" /></label>
         <div class="f">Tags<div class="tagbox" id="tagbox"></div><div class="tagsug" id="tagsug"></div></div>
+        <label class="f notes">Your thinking<textarea data-f="notes" placeholder="What made it work? What would you steal from it?">${esc(i.notes)}</textarea></label>
       </div>
     </div>
-    <label class="f notes">Your thinking<textarea data-f="notes" placeholder="What made it work? What would you steal from it?">${esc(i.notes)}</textarea></label>
     <div class="sheet-acts">
       <button class="btn btn-danger" id="ddel">Delete</button>
       <span style="flex:1"></span>
       <button class="btn btn-hot" id="dclose">Done</button></div>
-    ${dl('brand',uniq('brand'))}${dl('agency',uniq('agency'))}${dl('market',uniq('market'))}`,
+    ${dl('brand',uniq('brand'))}${dl('agency',uniq('agency'))}${dl('market',uniq('market'))}${dl('category',[...new Set([...CATEGORIES,...uniq('category')])])}`,
   el=>{
-    drawStatus(i);drawFinds(i);drawBrandSuggest(i);drawTags(i);
+    drawStatus(i);drawFinds(i);drawBrandSuggest(i);drawTags(i);drawAuto(i);syncInputs(i);
+    el.querySelector('#dcopy').onclick=e=>copyLink(i,e.currentTarget);
     el.querySelectorAll('[data-f]').forEach(f=>{
       f.oninput=()=>{let v=f.value;if(f.dataset.f==='year'){v=v.replace(/\D/g,'').slice(0,4);if(f.value!==v)f.value=v}
-        i[f.dataset.f]=v;i.updated=Date.now();save();
+        i[f.dataset.f]=v;
+        if((i.auto||[]).includes(f.dataset.f)){i.auto=i.auto.filter(x=>x!==f.dataset.f);f.closest('.f').classList.remove('auto')}
+        touch(i);
         if(['brand','campaign','agency','year','line'].includes(f.dataset.f))drawFinds(i);
         if(f.dataset.f==='brand')drawBrandSuggest(i)};
-      f.onblur=()=>{const v=(i[f.dataset.f]||'').trim();if(v!==i[f.dataset.f]){i[f.dataset.f]=v;save()}};
+      f.onblur=()=>{const v=(i[f.dataset.f]||'').trim();if(v!==i[f.dataset.f]){i[f.dataset.f]=v;touch(i)}};
     });
     const th=el.querySelector('#dthumb');
     th.ondragover=e=>{e.preventDefault();th.classList.add('over')};
@@ -579,12 +644,184 @@ function openDetail(id){
     th.ondrop=e=>{e.preventDefault();th.classList.remove('over');const f=e.dataTransfer.files&&e.dataTransfer.files[0];setThumbFromFile(f,i)};
     el.querySelector('#dclose').onclick=closeDetail;
     el.querySelector('#ddel').onclick=()=>{
-      const idx=S.items.indexOf(i);S.items.splice(idx,1);save();closeDetail();
-      toastUndo('deleted',()=>{S.items.splice(Math.min(idx,S.items.length),0,i);save();render()})};
+      const idx=S.items.indexOf(i);S.items.splice(idx,1);S.deleted[i.id]=Date.now();save();closeDetail();
+      toastUndo('deleted',()=>{delete S.deleted[i.id];S.items.splice(Math.min(idx,S.items.length),0,i);touch(i);render()})};
     if(!i.brand){const b=el.querySelector('[data-f="brand"]');if(b)b.focus()}
   },'detail');
 }
-function closeDetail(){OPEN=null;closeSheet();render()}
+function closeDetail(){OPEN=null;closeSheet();render();cloudFlush()}
+
+/* ============ auto-fill: brand, agency, year… found on the web ============ */
+const AUTO='<span class="autotag" title="Filled in automatically — check it">auto</span>';
+const CATEGORIES=['Automotive','Beverages','Alcohol','Food & Restaurants','Tech & Electronics','Telecom','Retail & E-commerce','Fashion & Apparel',
+  'Beauty & Personal care','Finance & Insurance','Travel & Hospitality','Sports','Media & Entertainment','Gaming','Health & Pharma',
+  'Home & Household','Public service & NGO','Other'];
+const AUTO_FIELDS=['brand','campaign','agency','year','market','category','line'];
+const ENRICHING=new Set();
+/* fills only empty fields — anything you typed is never overwritten */
+async function enrich(i,manual){
+  if(!i||ENRICHING.has(i.id))return;
+  if(!cloudKey()){if(manual)openCloud('Auto-fill runs on your Reel server. Connect with your passphrase first.');return}
+  ENRICHING.add(i.id);refreshItem(i.id);
+  let r=null,err='';
+  try{const res=await fetch(API+'/api/enrich',{method:'POST',headers:{'content-type':'application/json','x-reel-key':cloudKey()},
+      body:JSON.stringify({vid:i.vid,title:i.title,channel:i.channel})});
+    r=await res.json().catch(()=>null);
+    if(res.status===401){cloudDenied();err='passphrase rejected'}
+    else if(!res.ok)err=(r&&r.error)||('error '+res.status)}
+  catch(e){err='offline'}
+  ENRICHING.delete(i.id);
+  if(!byId(i.id))return;
+  const filled=[];
+  if(r&&!err){
+    AUTO_FIELDS.forEach(f=>{if(r[f]&&!String(i[f]||'').trim()){i[f]=r[f];filled.push(f)}});
+    i.auto=[...new Set([...(i.auto||[]),...filled])];
+    if(r.sources&&r.sources.length)i.sources=r.sources;
+    i.enriched=Date.now();touch(i);
+  }
+  i.autoMsg=err?"couldn't search: "+err:filled.length?'found '+filled.join(', '):'nothing new found on the web';
+  refreshItem(i.id);
+  if(manual||OPEN===i.id||filled.length)toast(i.autoMsg);
+}
+function drawAuto(i){
+  const b=mlayer.querySelector('#autobar');if(!b)return;
+  const busy=ENRICHING.has(i.id)||PENDING.has(i.id);
+  const src=(i.sources||[]).map((u,k)=>{let h=u;try{h=new URL(u).hostname.replace(/^www\./,'')}catch(e){}
+    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`}).join(' · ');
+  b.innerHTML=`<button class="autobtn" id="autogo" ${busy?'disabled':''}>✦ ${i.enriched?'Search the web again':'Auto-fill from the web'}</button>
+    <span class="automsg ${busy?'busy':''}">${ENRICHING.has(i.id)?'searching YouTube, trade press, Ads of the World…'
+      :i.autoMsg?esc(i.autoMsg)+(src?' · from '+src:''):src?'from '+src:'fills the empty fields · you can edit anything'}</span>`;
+  b.querySelector('#autogo').onclick=()=>enrich(i,true);
+}
+
+/* ============ cloud backup — your library on your Vercel project ============ */
+/* localStorage stays the working copy (fast, works offline). Every change is also sent to /api/library,
+   which merges it into one private file on Vercel Blob and keeps a snapshot per day. Thumbnails go up once each. */
+const CLOUD_KEY='reel_cloud_key';
+const API='';
+const cloudKey=()=>{try{return localStorage.getItem(CLOUD_KEY)||''}catch(e){return ''}};
+const CLOUD={state:cloudKey()?'idle':'off',at:0,msg:'',busy:false,dirty:false,timer:0,lastPull:0};
+const canMerge=()=>typeof window.mergeLibraries==='function';
+function cloudDirty(){if(!cloudKey())return;CLOUD.dirty=true;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,15000)}
+function cloudFlush(){if(CLOUD.dirty){clearTimeout(CLOUD.timer);cloudPush()}}
+function cloudDenied(){CLOUD.state='denied';CLOUD.msg='passphrase rejected';drawCloudMeta()}
+const stripItem=i=>{const o=Object.assign({},i);delete o.thumb;delete o.autoMsg;return o};
+const payload=()=>({items:S.items.map(stripItem),deleted:S.deleted,lastBackup:S.lastBackup});
+async function api(method,path,body,raw){
+  const h={'x-reel-key':cloudKey()};if(body&&!raw)h['content-type']='application/json';
+  const r=await fetch(API+path,{method,headers:h,body:raw?body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  if(r.status===401){cloudDenied();throw new Error('denied')}
+  if(!r.ok)throw new Error('server said '+r.status);
+  return raw===true?r:r.headers.get('content-type')?.includes('json')?r.json():r;
+}
+/* bring the cloud's version in, keeping whatever changed here since — then reattach the thumbnails we already hold */
+function adopt(cloud){
+  const local=new Map(S.items.map(i=>[i.id,i]));
+  const m=window.mergeLibraries(cloud,payload());
+  /* update the objects already on screen in place, so an open ad or a running auto-fill keeps pointing at the live one */
+  S.items=m.items.map(i=>{const l=local.get(i.id);if(!l)return i;
+    const thumb=l.thumb&&(l.thumbV||0)===(i.thumbV||0)?l.thumb:'';
+    Object.keys(l).forEach(k=>{if(!(k in i)&&k!=='autoMsg')delete l[k]});
+    Object.assign(l,i);if(thumb)l.thumb=thumb;
+    return l});
+  S.deleted=m.deleted;S.lastBackup=m.lastBackup||S.lastBackup;
+  saveLocal();
+}
+const differs=(cloud)=>{const c=new Map((cloud.items||[]).map(i=>[i.id,i.updated||0]));
+  return S.items.some(i=>c.get(i.id)!==(i.updated||0))||Object.keys(S.deleted).some(id=>!(cloud.deleted||{})[id])
+    ||(cloud.items||[]).length!==S.items.length};
+async function cloudPull(){
+  if(!cloudKey()||!canMerge()||CLOUD.busy)return;
+  CLOUD.busy=true;CLOUD.state='syncing';drawCloudMeta();
+  try{const cloud=await api('GET','/api/library');
+    adopt(cloud);CLOUD.lastPull=Date.now();CLOUD.state='ok';CLOUD.at=Date.now();
+    if(!OPEN)render();else refreshItem(OPEN);
+    if(differs(cloud))CLOUD.dirty=true;
+    thumbsDown();}
+  catch(e){if(CLOUD.state!=='denied'){CLOUD.state='error';CLOUD.msg=e.message==='Failed to fetch'?'offline':e.message}}
+  CLOUD.busy=false;drawCloudMeta();
+  if(CLOUD.dirty)cloudPush();
+}
+async function cloudPush(){
+  if(!cloudKey()||!canMerge())return;
+  if(CLOUD.busy){CLOUD.timer=setTimeout(cloudPush,3000);return}
+  CLOUD.busy=true;CLOUD.dirty=false;CLOUD.state='syncing';drawCloudMeta();
+  try{await thumbsUp();
+    const cloud=await api('PUT','/api/library',payload());
+    adopt(cloud);CLOUD.state='ok';CLOUD.at=Date.now();
+    if(OPEN)refreshItem(OPEN);else drawGrid();}
+  catch(e){CLOUD.dirty=true;if(CLOUD.state!=='denied'){CLOUD.state='error';CLOUD.msg=e.message==='Failed to fetch'?'offline':e.message;
+    clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,60000)}}
+  CLOUD.busy=false;drawCloudMeta();
+}
+/* thumbnails: each one is uploaded once, and fetched on a device that doesn't have it yet */
+async function thumbsUp(){
+  for(const i of S.items.filter(i=>i.thumb&&!i.thumbUp)){
+    const blob=await (await fetch(i.thumb)).blob();
+    await api('PUT','/api/thumb?vid='+i.vid,blob,true);
+    i.thumbUp=true;i.thumbV=i.thumbV||Date.now();i.updated=Date.now();
+  }
+  saveLocal();
+}
+async function thumbsDown(){
+  for(const i of S.items.filter(i=>i.thumbUp&&!i.thumb)){
+    try{const r=await api('GET','/api/thumb?vid='+i.vid,null,true);
+      const b=await r.blob();
+      i.thumb=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res('');fr.readAsDataURL(b)});
+      if(i.thumb){i.thumbSrc='';saveLocal();refreshItem(i.id)}}
+    catch(e){if(CLOUD.state==='denied')return}
+  }
+}
+const ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<45?'just now':s<3600?Math.round(s/60)+' min ago':Math.round(s/3600)+' h ago'};
+function cloudText(){
+  if(!cloudKey())return ['cloud backup off','warn'];
+  if(!canMerge())return ['cloud needs the web version',''];
+  return {syncing:['cloud: syncing…','ok'],ok:[`cloud: saved ${ago(CLOUD.at)}${CLOUD.dirty?' · changes pending':''}`,'ok'],idle:['cloud: connecting…','ok'],
+    error:['cloud: '+CLOUD.msg+' — will retry','warn'],denied:['cloud: passphrase rejected','warn']}[CLOUD.state]||['cloud','ok'];
+}
+function drawCloudMeta(){const m=document.getElementById('cloudmeta');if(!m)return;const [t,c]=cloudText();m.textContent=t;m.className='meta '+c}
+setInterval(drawCloudMeta,30000);
+function openCloud(why){
+  const on=!!cloudKey();
+  sheet(on?`<h3>Cloud backup is on</h3>
+      <p>Every change is saved to a private file on your Vercel project, merged so no device can wipe another, with one snapshot kept per day. Open Reel on any computer and enter the same passphrase to get everything there.</p>
+      <p class="fine">${esc(cloudText()[0])}</p>
+      <div class="sheet-acts"><button class="btn" id="coff">Disconnect this browser</button><span style="flex:1"></span>
+        <button class="btn" id="csync">Sync now</button><button class="btn btn-hot" id="cok">Done</button></div>`
+    :`<h3>Keep your ads in the cloud</h3>
+      <p>${why?esc(why)+' ':''}Right now everything lives only in this browser — clearing site data would erase it. Enter your Reel passphrase to save a copy on your Vercel project (free, private) and to turn on auto-fill.</p>
+      <input class="pass" id="cpass" type="password" placeholder="reel-…" autocomplete="current-password" />
+      <p class="fine">It's the <b>REEL_KEY</b> value in Vercel → reel → Settings → Environment Variables.</p>
+      <div class="sheet-acts"><button class="btn" id="cno">Not now</button><button class="btn btn-hot" id="cgo">Connect</button></div>`,
+  el=>{
+    if(on){el.querySelector('#cok').onclick=closeSheet;
+      el.querySelector('#csync').onclick=()=>{closeSheet();CLOUD.dirty=true;cloudPull()};
+      el.querySelector('#coff').onclick=()=>{try{localStorage.removeItem(CLOUD_KEY)}catch(e){}CLOUD.state='off';closeSheet();render();
+        toast('disconnected — your ads stay in the cloud')};return}
+    const inp=el.querySelector('#cpass');inp.focus();
+    el.querySelector('#cno').onclick=closeSheet;
+    const go=async()=>{const k=inp.value.trim();if(!k)return;
+      const b=el.querySelector('#cgo');b.disabled=true;b.textContent='Checking…';
+      let ok=false;try{const r=await fetch(API+'/api/library',{headers:{'x-reel-key':k},cache:'no-store'});ok=r.ok;
+        if(r.status===401){b.disabled=false;b.textContent='Connect';inp.value='';inp.placeholder='That passphrase didn’t work';inp.focus();return}}
+      catch(e){}
+      if(!ok){b.disabled=false;b.textContent='Connect';sheetAlert("Couldn't reach the Reel server. Are you on the web version (not a downloaded file)?");return}
+      try{localStorage.setItem(CLOUD_KEY,k)}catch(e){}
+      CLOUD.state='idle';CLOUD.dirty=true;closeSheet();render();await cloudPull();
+      toast(`cloud on · ${S.items.length} ads saved`);
+    };
+    el.querySelector('#cgo').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
+  });
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden')cloudFlush();
+  else if(Date.now()-CLOUD.lastPull>60000&&!CLOUD.dirty)cloudPull();
+});
+window.addEventListener('pagehide',()=>{
+  if(!CLOUD.dirty||!cloudKey())return;
+  const b=JSON.stringify(payload());
+  if(b.length<60000)try{fetch(API+'/api/library',{method:'PUT',keepalive:true,headers:{'x-reel-key':cloudKey(),'content-type':'application/json'},body:b})}catch(e){}
+});
 
 /* ============ sheets & toasts — no native dialogs ============ */
 function closeSheet(){mlayer.innerHTML=''}
@@ -643,6 +880,14 @@ function importBackup(){
     const r=new FileReader();r.onerror=()=>sheetAlert('Could not read that file.');
     r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){return sheetAlert('That file isn’t valid JSON.')}
       if(!d||!Array.isArray(d.items)||d.items.some(x=>!x||!x.vid))return sheetAlert('That file isn’t a Reel backup.');
+      if(canMerge())return sheetConfirm('Add the ads from this file?',
+        `The file holds ${d.items.length} ads. Nothing you have now is removed; where both have the same ad, the most recently edited version wins.`,
+        'Add them',()=>{const had=S.items.length,thumbs=new Map(d.items.filter(x=>x.thumb).map(x=>[x.vid,x]));
+          const m=window.mergeLibraries(payload(),d);
+          m.items.forEach(i=>{const t=thumbs.get(i.vid),l=S.items.find(x=>x.vid===i.vid);
+            if(!i.thumb&&l&&l.thumb&&(l.thumbV||0)===(i.thumbV||0))i.thumb=l.thumb;
+            if(!i.thumb&&t&&(t.thumbV||0)===(i.thumbV||0))i.thumb=t.thumb});
+          S.items=m.items;S.deleted=m.deleted;save();render();toast(`${S.items.length-had} added`)});
       sheetConfirm('Replace everything with this file?',
         `The file holds ${d.items.length} ads. This replaces the ${S.items.length} you have now — export first if you're not sure.`,
         'Replace',()=>{try{localStorage.setItem(KEY,JSON.stringify(d));location.reload()}
@@ -667,6 +912,8 @@ function wireTop(){
   const ch=document.getElementById('check');if(ch)ch.onclick=checkLinks;
   document.getElementById('exp').onclick=exportBackup;
   document.getElementById('imp').onclick=importBackup;
+  document.getElementById('cloudmeta').onclick=()=>openCloud();
+  const co=document.getElementById('cloudon');if(co)co.onclick=()=>openCloud();
 }
 const typing=t=>t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable);
 document.addEventListener('keydown',e=>{
@@ -684,6 +931,12 @@ document.addEventListener('paste',e=>{
   if(t&&extractIds(t).length){e.preventDefault();capture(t,document.getElementById('dumpbox'))}
 });
 render();
+document.addEventListener('DOMContentLoaded',()=>{render();if(cloudKey())cloudPull()});
+</script>
+<script type="module">
+/* shared with the server so both sides merge the same way; a downloaded copy without it simply runs local-only */
+import {mergeLibraries} from './lib/merge.js';
+window.mergeLibraries=mergeLibraries;
 </script>
 </body>
 </html>
