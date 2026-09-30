@@ -1,4 +1,5 @@
 import { authorized, denied, json } from './_auth.js';
+import { readUsage, addUsage, overCap, estimate } from './_usage.js';
 
 /* Given a YouTube ad, find brand, campaign, agency, year, market and category.
    Reads what YouTube says about the video, then lets Claude search the web (trade press,
@@ -46,6 +47,10 @@ export async function POST(request) {
   const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   if (!token) return json({ error: 'AI Gateway not available on this deployment' }, 503);
 
+  const usage = await readUsage();
+  if (overCap(usage))
+    return json({ error: `monthly auto-fill limit reached (${usage.ads} ads, ~$${usage.usd.toFixed(2)})`, usage }, 429);
+
   const yt = await youtubeFacts(vid);
   const prompt = `You catalogue TV and online ads for an advertising professional's personal library.
 
@@ -75,14 +80,17 @@ Use "" for anything you can't find with reasonable confidence. Never guess an ag
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 1500,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages: [{ role: 'user', content: prompt }],
     }),
     signal: AbortSignal.timeout(80000),
   }).catch(e => ({ ok: false, status: 504, text: async () => String(e) }));
 
   if (!r.ok) return json({ error: `search failed (${r.status})`, detail: (await r.text()).slice(0, 400) }, 502);
-  const found = parseAnswer(await r.json()) || {};
+  const msg = await r.json();
+  const found = parseAnswer(msg) || {};
+  const u = msg.usage || {};
+  const now = await addUsage(usage, estimate(u), (u.server_tool_use && u.server_tool_use.web_search_requests) || 0);
 
   const out = {};
   for (const f of FIELDS) {
@@ -93,5 +101,6 @@ Use "" for anything you can't find with reasonable confidence. Never guess an ag
   if (!out.year && yt.published) out.year = yt.published.slice(0, 4);
   if (out.category && !CATEGORIES.includes(out.category)) out.category = 'Other';
   out.sources = (Array.isArray(found.sources) ? found.sources : []).filter(u => /^https?:\/\//.test(u)).slice(0, 3);
+  out.usage = now;
   return json(out);
 }

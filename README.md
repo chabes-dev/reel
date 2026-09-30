@@ -20,6 +20,7 @@ YouTube links die when brands take a campaign offline. Reel stores a *fingerprin
 - Cloud backup: `/api/library` merges every change into one private file on Vercel Blob (store `reel-library`), newest edit per ad wins, deletes are tombstones, one dated snapshot per day in `snapshots/`. Thumbnails go to `thumbs/<videoId>.jpg` once each
 - Every `/api/*` call needs the passphrase in the `REEL_KEY` env var; the browser keeps it in `localStorage` (`reel_cloud_key`)
 - Auto-fill: `/api/enrich` reads the YouTube description, then Claude (via Vercel AI Gateway, OIDC auth, web search) finds brand, campaign, agency, year, market, category and tagline. Fills empty fields only; filled fields get an "auto" tag until edited. Model overridable with `ENRICH_MODEL`
+- Spend guard: `/api/enrich` counts every search in `usage/YYYY-MM.json` and refuses once the month hits `ENRICH_MONTHLY_LIMIT` ads (default 100) or `ENRICH_MONTHLY_BUDGET` estimated USD (default 4.50). The footer shows this month's count, estimated cost and the AI Gateway credit Vercel reports (`/api/usage`)
 - No video downloads; must stay free
 - Metadata via YouTube oEmbed (fallback: noembed.com); thumbnails from i.ytimg.com
 - Paste accepts whole emails — Outlook safelinks and `&amp;` are unwrapped

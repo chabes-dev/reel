@@ -425,6 +425,7 @@ function render(){
       <p>Links from Outlook work too. Paste the whole email and every YouTube link in it gets saved.</p></div>`}
     <footer class="foot">
       <button class="meta" id="cloudmeta"></button>
+      ${cloudKey()?`<span class="meta" id="usagemeta" title="Auto-fill stops by itself at the cap, so it never runs past Vercel's free credit">${esc(usageText())}</span>`:''}
       <span class="meta ${!cloudKey()&&(ba===null||ba>13)?'warn':''}">${ba===null?'no file backup yet':ba===0?'file backup today':'file backup '+ba+' days ago'}</span>
       <span class="meta ${pct>80?'warn':''}">storage ${pct}% used</span>
       <span class="sp"></span>
@@ -432,7 +433,7 @@ function render(){
       <button class="btn" id="exp">↓ Export backup</button>
       <button class="btn" id="imp">↑ Import backup</button>
     </footer></div>`;
-  wireTop();drawCloudMeta();
+  wireTop();drawCloudMeta();drawUsage();
   if(n)drawGrid();
 }
 function filtersHtml(){
@@ -667,6 +668,7 @@ async function enrich(i,manual){
   try{const res=await fetch(API+'/api/enrich',{method:'POST',headers:{'content-type':'application/json','x-reel-key':cloudKey()},
       body:JSON.stringify({vid:i.vid,title:i.title,channel:i.channel})});
     r=await res.json().catch(()=>null);
+    if(r&&r.usage){USAGE=Object.assign({},USAGE,r.usage);drawUsage()}
     if(res.status===401){cloudDenied();err='passphrase rejected'}
     else if(!res.ok)err=(r&&r.error)||('error '+res.status)}
   catch(e){err='offline'}
@@ -737,7 +739,7 @@ async function cloudPull(){
     adopt(cloud);CLOUD.lastPull=Date.now();CLOUD.state='ok';CLOUD.at=Date.now();
     if(!OPEN)render();else refreshItem(OPEN);
     if(differs(cloud))CLOUD.dirty=true;
-    thumbsDown();}
+    thumbsDown();loadUsage();}
   catch(e){if(CLOUD.state!=='denied'){CLOUD.state='error';CLOUD.msg=e.message==='Failed to fetch'?'offline':e.message}}
   CLOUD.busy=false;drawCloudMeta();
   if(CLOUD.dirty)cloudPush();
@@ -772,6 +774,16 @@ async function thumbsDown(){
     catch(e){if(CLOUD.state==='denied')return}
   }
 }
+/* what auto-fill has cost this month, plus the credit Vercel says is left */
+let USAGE=null;
+async function loadUsage(){try{USAGE=await api('GET','/api/usage');drawUsage()}catch(e){}}
+function usageText(){
+  if(!USAGE)return '';
+  const c=USAGE.credits&&USAGE.credits.balance!=null?` · Vercel AI credit left $${(+USAGE.credits.balance).toFixed(2)}`:'';
+  return `auto-fill ${USAGE.ads} of ${USAGE.limitAds} this month · ~$${(+USAGE.usd).toFixed(2)} of $${(+USAGE.limitUsd).toFixed(2)} cap${c}`;
+}
+function drawUsage(){const m=document.getElementById('usagemeta');if(!m)return;const t=usageText();m.textContent=t;
+  m.className='meta'+(USAGE&&(USAGE.ads>=USAGE.limitAds*.8||USAGE.usd>=USAGE.limitUsd*.8)?' warn':'')}
 const ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<45?'just now':s<3600?Math.round(s/60)+' min ago':Math.round(s/3600)+' h ago'};
 function cloudText(){
   if(!cloudKey())return ['cloud backup off','warn'];
@@ -785,7 +797,7 @@ function openCloud(why){
   const on=!!cloudKey();
   sheet(on?`<h3>Cloud backup is on</h3>
       <p>Every change is saved to a private file on your Vercel project, merged so no device can wipe another, with one snapshot kept per day. Open Reel on any computer and enter the same passphrase to get everything there.</p>
-      <p class="fine">${esc(cloudText()[0])}</p>
+      <p class="fine">${esc(cloudText()[0])}${USAGE?'<br>'+esc(usageText()):''}</p>
       <div class="sheet-acts"><button class="btn" id="coff">Disconnect this browser</button><span style="flex:1"></span>
         <button class="btn" id="csync">Sync now</button><button class="btn btn-hot" id="cok">Done</button></div>`
     :`<h3>Keep your ads in the cloud</h3>
