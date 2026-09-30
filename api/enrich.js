@@ -86,7 +86,13 @@ Use "" for anything you can't find with reasonable confidence. Never guess an ag
     signal: AbortSignal.timeout(80000),
   }).catch(e => ({ ok: false, status: 504, text: async () => String(e) }));
 
-  if (!r.ok) return json({ error: `search failed (${r.status})`, detail: (await r.text()).slice(0, 400) }, 502);
+  if (!r.ok) {
+    const detail = (await r.text()).slice(0, 600);
+    console.error('AI Gateway refused', r.status, detail);
+    let why = '';
+    try { const e = JSON.parse(detail).error; why = (e && (e.message || e)) || ''; } catch {}
+    return json({ error: `search failed (${r.status})${why ? ': ' + String(why).slice(0, 220) : ''}`, detail }, 502);
+  }
   const msg = await r.json();
   const found = parseAnswer(msg) || {};
   const u = msg.usage || {};
