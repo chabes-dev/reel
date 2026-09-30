@@ -31,13 +31,13 @@ export const overCap = u => u.ads >= u.limitAds || u.usd >= u.limitUsd;
 /* what Vercel itself reports: remaining AI Gateway credit and lifetime spend, in USD */
 export async function gatewayCredits() {
   const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
-  if (!token) return null;
+  if (!token) return { error: 'no AI Gateway token on this deployment' };
   try {
     const r = await fetch('https://ai-gateway.vercel.sh/v1/credits', {
       headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000),
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { error: `credits check said ${r.status}`, detail: (await r.text()).slice(0, 200) };
     const j = await r.json();
     return { balance: j.balance, used: j.total_used };
-  } catch { return null; }
+  } catch (e) { return { error: String(e).slice(0, 200) }; }
 }
