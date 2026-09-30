@@ -483,7 +483,9 @@ function render(){
       <div id="gridwrap"></div>`
     :`<div class="empty"><h3>Nothing saved yet.</h3>
       <p><span class="desk-only">Paste a YouTube link above — or press <b>⌘V</b> anywhere on this page.</span><span class="touch-only">Copy a link in the YouTube app (Share → Copy link), then tap <b>Paste link</b>.</span> The title and thumbnail fill in by themselves; everything else can wait.</p>
-      <p>Links from Outlook work too. Paste the whole email and every YouTube link in it gets saved.</p></div>`}
+      <p>Links from Outlook work too. Paste the whole email and every YouTube link in it gets saved.</p>
+      ${!cloudKey()&&canMerge()?`<p style="margin-top:26px"><b>Already saved ads on another device?</b></p>
+        <button class="btn btn-hot" id="cloudload">Load my ads from the cloud</button>`:''}</div>`}
     <footer class="foot">
       <button class="meta" id="cloudmeta"></button>
       ${cloudKey()?`<span class="meta" id="usagemeta" title="Auto-fill stops by itself at the cap, so it never runs past Vercel's free credit">${esc(usageText())}</span>`:''}
@@ -1003,6 +1005,7 @@ function wireTop(){
   document.getElementById('imp').onclick=importBackup;
   document.getElementById('cloudmeta').onclick=()=>openCloud();
   const co=document.getElementById('cloudon');if(co)co.onclick=()=>openCloud();
+  const cl=document.getElementById('cloudload');if(cl)cl.onclick=()=>openCloud();
 }
 const typing=t=>t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable);
 document.addEventListener('keydown',e=>{
