@@ -223,6 +223,32 @@ a{color:inherit}
   border-radius:999px;padding:5px 12px}
 .tagsug button:hover{border-color:var(--hot);color:var(--hot);border-style:solid}
 .notes{margin-top:8px;margin-bottom:24px}
+.team{margin:0 0 24px;border:1.5px solid var(--line-soft);border-radius:14px;background:var(--card)}
+.team>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 18px;font-family:var(--mono);font-size:12.5px;
+  font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);user-select:none}
+.team>summary::-webkit-details-marker{display:none}
+.team>summary .tcount{letter-spacing:.06em;font-weight:400;text-transform:none;font-size:13px}
+.team>summary .chev{margin-left:auto;transition:transform .2s;font-size:14px}
+.team[open]>summary .chev{transform:rotate(180deg)}
+.team>summary:hover{color:var(--ink-2)}
+.tbody{padding:0 18px 16px}
+.tlist{list-style:none;margin:0 0 12px}
+.tperson{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--line-soft);font-size:16px}
+.tperson:first-child{border-top:none}
+.tname{font-weight:600;color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.tname:hover{text-decoration-color:var(--hot)}
+.trole{color:var(--ink-2);font-size:14.5px}
+.tmeta{margin-left:auto;display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.tmeta a{color:var(--ink-3)}
+.tmeta .ok{color:#188038}
+.tmeta .unc{color:var(--amber-ink)}
+.tperson.unconf .tname{font-weight:500}
+.tx{width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1;color:var(--ink-3)}
+.tx:hover{background:var(--red-soft);color:var(--red)}
+.tadd{display:flex;gap:8px;margin-top:4px}
+.tadd input{flex:1;min-width:0;font-size:15px;padding:8px 0;border-bottom:1.5px solid var(--line)}
+.tadd input:focus{border-color:var(--hot)}
+.tfine{font-size:13px;color:var(--ink-3);margin-top:10px;line-height:1.45}
 .notes textarea{font-family:var(--serif);font-size:22px;font-weight:300;line-height:1.5;min-height:220px;resize:vertical;
   background:var(--g50);border:2px solid var(--line-soft);border-radius:14px;padding:18px 20px;margin-top:10px}
 .notes textarea:focus{background:var(--card)}
@@ -277,6 +303,8 @@ a{color:inherit}
   .dgrid .frow,.dgrid>div>.f,#brandsug,#autobar{order:4}
   .dgrid .frow:first-child{margin-top:22px}
   .dgrid .notes{order:5}
+  .dgrid .team{order:5}
+  .tmeta{margin-left:0;flex-basis:100%}
   .dsec-h{order:6}.finds{order:7}.ytmeta{order:8;margin-bottom:10px}
   .watch,.copy{padding:13px 12px;font-size:12.5px;letter-spacing:.07em}
   .f{margin-bottom:18px}
@@ -432,7 +460,8 @@ function dumpMsg(t,warn){const d=document.getElementById('dumpmsg');if(!d)return
   d.textContent=t;d.classList.toggle('warn',!!warn);clearTimeout(dumpMsg.k);dumpMsg.k=setTimeout(()=>{if(d)d.textContent=''},4000)}
 
 /* ============ search, filter, sort ============ */
-const hay=i=>fold([i.brand,i.campaign,i.title,i.channel,i.agency,i.year,i.market,i.category,i.line,i.notes,(i.tags||[]).join(' ')].join(' '));
+const hay=i=>fold([i.brand,i.campaign,i.title,i.channel,i.agency,i.year,i.market,i.category,i.line,i.notes,(i.tags||[]).join(' '),
+  (i.team||[]).map(p=>p.name+' '+p.role+' '+p.company).join(' ')].join(' '));
 function visible(){
   const words=fold(S.ui.q).split(/\s+/).filter(Boolean);
   let l=S.items.filter(i=>{
@@ -566,7 +595,7 @@ function refreshItem(id){
     const th=mlayer.querySelector('#dthumb');if(th){th.innerHTML=dthumbInner(i);th.classList.toggle('gone',i.status==='gone')}
     const ym=mlayer.querySelector('#ytmeta');if(ym)ym.innerHTML=ytmetaHtml(i);
     const cp=mlayer.querySelector('[data-f="campaign"]');if(cp&&!cp.value)cp.placeholder=i.title||'e.g. Shot on iPhone — Relay';
-    drawBrandSuggest(i);drawStatus(i);drawFinds(i);drawAuto(i);syncInputs(i);
+    drawBrandSuggest(i);drawStatus(i);drawFinds(i);drawAuto(i);drawTeam(i,true);syncInputs(i);
   }
 }
 /* values that arrive while the ad is open (auto-fill, another device) show up without clobbering what you're typing */
@@ -689,6 +718,7 @@ function openDetail(id){
           placeholder="The exact words — your best search key if it disappears" /></label>
         <div class="f">Tags<div class="tagbox" id="tagbox"></div><div class="tagsug" id="tagsug"></div></div>
         <label class="f notes">Your thinking<textarea data-f="notes" placeholder="What made it work? What would you steal from it?">${esc(i.notes)}</textarea></label>
+        <details class="team" id="team" ${TEAM_OPEN?'open':''}></details>
       </div>
     </div>
     <div class="sheet-acts">
@@ -697,7 +727,8 @@ function openDetail(id){
       <button class="btn btn-hot" id="dclose">Done</button></div>
     ${dl('brand',uniq('brand'))}${dl('agency',uniq('agency'))}${dl('market',uniq('market'))}${dl('category',[...new Set([...CATEGORIES,...uniq('category')])])}`,
   el=>{
-    drawStatus(i);drawFinds(i);drawBrandSuggest(i);drawTags(i);drawAuto(i);syncInputs(i);
+    drawStatus(i);drawFinds(i);drawBrandSuggest(i);drawTags(i);drawAuto(i);drawTeam(i);syncInputs(i);
+    el.querySelector('#team').ontoggle=e=>{TEAM_OPEN=e.target.open};
     el.querySelector('#dcopy').onclick=e=>copyLink(i,e.currentTarget);
     el.querySelectorAll('[data-f]').forEach(f=>{
       f.oninput=()=>{let v=f.value;if(f.dataset.f==='year'){v=v.replace(/\D/g,'').slice(0,4);if(f.value!==v)f.value=v}
@@ -767,6 +798,74 @@ function drawAuto(i){
     <span class="automsg ${busy?'busy':''}">${ENRICHING.has(i.id)?'searching YouTube, trade press, Ads of the World…'
       :i.autoMsg?esc(i.autoMsg)+(src?' · from '+src:''):src?'from '+src:'fills the empty fields · you can edit anything'}</span>`;
   b.querySelector('#autogo').onclick=()=>enrich(i,true);
+}
+
+/* ============ find the team: who made it ============ */
+let TEAM_OPEN=false;
+const TEAMING=new Set();
+async function findTeam(i){
+  if(!i||TEAMING.has(i.id))return;
+  if(!cloudKey()){openCloud('Find the team runs on your Reel server. Connect with your passphrase first.');return}
+  TEAMING.add(i.id);drawTeam(i);
+  let r=null,err='';
+  try{const res=await fetch(API+'/api/team',{method:'POST',headers:{'content-type':'application/json','x-reel-key':cloudKey()},
+      body:JSON.stringify({vid:i.vid,title:i.title,channel:i.channel,brand:i.brand,campaign:i.campaign,agency:i.agency,year:i.year,market:i.market})});
+    r=await res.json().catch(()=>null);
+    if(r&&r.usage){USAGE=Object.assign({},USAGE,r.usage);drawUsage()}
+    if(res.status===401){cloudDenied();err='passphrase rejected'}
+    else if(!res.ok)err=(r&&r.error)||('error '+res.status)}
+  catch(e){err='offline'}
+  TEAMING.delete(i.id);
+  if(!byId(i.id))return;
+  if(!err&&r){
+    /* keep people you added or already had; add what's new */
+    const have=new Set((i.team||[]).map(p=>fold(p.name)));
+    const fresh=(r.team||[]).filter(p=>!have.has(fold(p.name)));
+    i.team=[...(i.team||[]),...fresh];
+    i.teamAt=Date.now();
+    const ok=(r.team||[]).filter(p=>p.verified).length;
+    i.teamMsg=!(r.team||[]).length?'no published credits found':`${r.team.length} found · ${ok} confirmed on a source page`;
+    touch(i);
+  }else i.teamMsg="couldn't search: "+err;
+  drawTeam(i);
+}
+function drawTeam(i,soft){
+  const box=mlayer.querySelector('#team');if(!box)return;
+  if(soft&&document.activeElement&&document.activeElement.id==='teamin')return;   /* don't wipe a name mid-typing */
+  const t=i.team||[],busy=TEAMING.has(i.id),e=encodeURIComponent;
+  const count=busy?'searching…':t.length?`${t.length} ${t.length===1?'person':'people'}`:i.teamAt?'none found':'';
+  const row=(p,k)=>{
+    const check='https://www.google.com/search?q='+e(`"${p.name}" ${[i.brand,i.campaign||'',i.agency||''].join(' ')}`.trim());
+    const li='https://www.linkedin.com/search/results/people/?keywords='+e(p.name);
+    const src=p.mine?'<span>added by you</span>'
+      :p.verified&&p.source?`<a class="ok" href="${esc(p.source.url)}" target="_blank" rel="noopener" title="Name found on this page">✓ ${esc(p.source.title)}</a>`
+      :`<a class="unc" href="${esc(check)}" target="_blank" rel="noopener" title="Couldn't match the name to a source page — check it">unconfirmed · check</a>`;
+    return `<li class="tperson ${p.verified||p.mine?'':'unconf'}">
+      <span class="tname" data-person="${esc(p.name)}" title="Show every ad with ${esc(p.name)}">${esc(p.name)}</span>
+      <span class="trole">${esc([p.role,p.company].filter(Boolean).join(' · '))}</span>
+      <span class="tmeta">${src}<a href="${esc(li)}" target="_blank" rel="noopener" title="Search LinkedIn">in</a>
+        <button class="tx" data-untm="${k}" title="Remove">×</button></span></li>`};
+  const open=box.open;
+  box.innerHTML=`<summary>The team<span class="tcount">${esc(count)}</span><span class="chev">▾</span></summary>
+    <div class="tbody">
+      ${t.length?`<ul class="tlist">${t.map(row).join('')}</ul>`:''}
+      <div class="autobar" style="margin:0 0 6px">
+        <button class="autobtn" id="teamgo" ${busy?'disabled':''}>✦ ${i.teamAt?'Search again':'Find the team'}</button>
+        <span class="automsg ${busy?'busy':''}">${busy?'reading LBB, Shots, award entries…':esc(i.teamMsg||'creatives, strategists and director, from published credits')}</span>
+      </div>
+      <div class="tadd"><input id="teamin" placeholder="Add someone: Name | Role" /></div>
+      <p class="tfine">✓ means the name appears on the linked page. Tap a name to see every ad of theirs you've saved.</p>
+    </div>`;
+  box.open=open;
+  box.querySelector('#teamgo').onclick=()=>findTeam(i);
+  box.querySelectorAll('[data-untm]').forEach(b=>b.onclick=()=>{i.team=(i.team||[]).filter((_,k)=>k!=+b.dataset.untm);touch(i);drawTeam(i)});
+  box.querySelectorAll('[data-person]').forEach(n=>n.onclick=()=>{const who=n.dataset.person;closeDetail();
+    S.ui.q=who;S.ui.tags=[];S.ui.flt=null;render();const q=document.getElementById('q');if(q)q.value=who;window.scrollTo(0,0)});
+  const inp=box.querySelector('#teamin');
+  inp.onkeydown=ev=>{if(ev.key!=='Enter')return;ev.preventDefault();
+    const [name,role,company]=inp.value.split('|').map(x=>x.trim());if(!name)return;
+    i.team=[...(i.team||[]),{name,role:role||'',company:company||'',mine:true}];touch(i);drawTeam(i);
+    const n=mlayer.querySelector('#teamin');if(n)n.focus()};
 }
 
 /* ============ cloud backup — your library on your Vercel project ============ */
@@ -853,7 +952,7 @@ async function loadUsage(){try{USAGE=await api('GET','/api/usage');drawUsage()}c
 function usageText(){
   if(!USAGE)return '';
   const c=USAGE.credits&&USAGE.credits.balance!=null?` · Vercel AI credit left $${(+USAGE.credits.balance).toFixed(2)}`:'';
-  if(USAGE.provider==='gemini')return `auto-fill ${USAGE.ads} of ${USAGE.limitAds} this month · free (Google Gemini)`;
+  if(USAGE.provider==='gemini')return `web searches ${USAGE.ads} of ${USAGE.limitAds} this month · free (Google Gemini)`;
   return `auto-fill ${USAGE.ads} of ${USAGE.limitAds} this month · ~$${(+USAGE.usd).toFixed(2)} of $${(+USAGE.limitUsd).toFixed(2)} cap${c}`;
 }
 function drawUsage(){const m=document.getElementById('usagemeta');if(!m)return;const t=usageText();m.textContent=t;

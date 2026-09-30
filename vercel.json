@@ -1,5 +1,10 @@
 {
   "functions": {
-    "api/enrich.js": { "maxDuration": 90 }
+    "api/enrich.js": {
+      "maxDuration": 90
+    },
+    "api/team.js": {
+      "maxDuration": 90
+    }
   }
 }

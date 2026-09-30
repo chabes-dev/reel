@@ -25,6 +25,12 @@ YouTube links die when brands take a campaign offline. Reel stores a *fingerprin
 - Metadata via YouTube oEmbed (fallback: noembed.com); thumbnails from i.ytimg.com
 - Paste accepts whole emails — Outlook safelinks and `&amp;` are unwrapped
 
+## Find the team
+- In each ad, a collapsed **The team** section (tap to open). "Find the team" asks Gemini + Google Search for the published credits (agency creatives, strategists, director, production company; max 12) via `/api/team`
+- Never answered from memory. Each name is checked against the pages Google cited and the YouTube description: found → ✓ with that page as source; not found → "unconfirmed · check" (a Google search for that name + the ad)
+- Add people by hand (`Name | Role`), remove wrong ones; tapping a name searches the library for everything that person worked on. Names, roles and companies are searchable
+- Google's free tier allows about 20 requests a day on the search-capable model (gemini-2.5-flash); auto-fill and Find the team share them
+
 ## Phone
 - Layout: two-column grid, full-screen ad view with a sticky Done bar, fields before the search buttons, no auto-focused keyboard
 - **Paste link** button next to the capture box (phones have no ⌘V); tapping the thumbnail replaces it
