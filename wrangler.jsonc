@@ -1,0 +1,20 @@
+/* Cloudflare: Reel's page and icons straight from the repo root, plus the /api/* endpoints in
+   worker/index.js, deployed from GitHub on every push to main. .assetsignore keeps server code,
+   config and notes from being published. Data: the shared D1 database "study-apps" (also used by
+   the syllabus). Secrets set in the Cloudflare dashboard: REEL_KEY, GEMINI_API_KEY.
+   The api/ folder is the old Vercel version, kept until that project is deleted. */
+{
+  "name": "reel",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "study-apps", "database_id": "94a62ec1-44ef-4cc3-ae7b-91446d46c159" }
+  ],
+  "observability": { "enabled": true }
+}

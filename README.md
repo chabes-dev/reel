@@ -2,7 +2,13 @@
 
 A personal bookmark library for YouTube ads worth remembering.
 
-Live: https://reel-chabes-devs-projects.vercel.app
+Live: on Cloudflare Workers (worker `reel`). The old Vercel copy at https://reel-chabes-devs-projects.vercel.app is being retired.
+
+## Hosting (Cloudflare, since Nov 2026)
+- `worker/` is the server: same `/api/library`, `/api/thumb`, `/api/usage`, `/api/enrich`, `/api/team` as before. The page and icons are served as static files from the repo root; `.assetsignore` keeps server code out
+- Storage moved from Vercel Blob to the shared Cloudflare D1 database `study-apps` (table `docs`, rows with `app = 'reel'`, same keys as the old Blob files: `library.json`, `snapshots/<day>.json`, `thumbs/<id>.jpg`, `usage/<month>.json`)
+- Secrets on the Cloudflare Worker: `REEL_KEY`, `GEMINI_API_KEY`
+- `api/` is the old Vercel version, kept until that project is deleted
 
 ## Why it exists
 YouTube links die when brands take a campaign offline. Reel stores a *fingerprint* of each ad at capture time, so it can be found again elsewhere:
